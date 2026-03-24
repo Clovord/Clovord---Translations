@@ -13,6 +13,8 @@ jobs:
       downloads: ${{ steps.filter.outputs.downloads }}
       desktop: ${{ steps.filter.outputs.desktop }}
       mobile: ${{ steps.filter.outputs.mobile }}
+      api_en: ${{ steps.filter.outputs.api_en }}
+      webapp_en: ${{ steps.filter.outputs.webapp_en }}
     steps:
       - uses: actions/checkout@v4
       - uses: dorny/paths-filter@v3
@@ -31,6 +33,132 @@ jobs:
             mobile:
               - "MobileApp/**"
               - "WebApp/**"
+            api_en:
+              - "API/en.json"
+            webapp_en:
+              - "WebApp/en_US.json"
+
+  notify-translators:
+    needs: detect
+    if: needs.detect.outputs.api_en == 'true' || needs.detect.outputs.webapp_en == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - name: Notify translation webhook
+        env:
+          API_BASE_URL: ${{ secrets.ORG_API_BASE_URL }}
+          BUILD_WEBHOOK_TOKEN: ${{ secrets.ORG_API_BUILD_WEBHOOK_SECRET }}
+          API_EN_CHANGED: ${{ needs.detect.outputs.api_en }}
+          WEBAPP_EN_CHANGED: ${{ needs.detect.outputs.webapp_en }}
+        run: |
+          if [ -z "$BUILD_WEBHOOK_TOKEN" ]; then
+            echo "Missing ORG_API_BUILD_WEBHOOK_SECRET" >&2
+            exit 1
+          fi
+          python - <<'PY'
+          import json
+          import os
+          import subprocess
+          from pathlib import Path
+          import urllib.request
+          import urllib.error
+
+          API_BASE = (os.environ.get("API_BASE_URL") or "https://api.clovord.com").rstrip("/")
+          TOKEN = os.environ.get("BUILD_WEBHOOK_TOKEN", "")
+          COMMIT_SHA = os.environ.get("GITHUB_SHA", "").strip()
+          COMMIT_URL = f"https://github.com/Clovord/Clovord---Translations/commit/{COMMIT_SHA}" if COMMIT_SHA else ""
+          MESSAGE = subprocess.check_output(["git", "log", "-1", "--pretty=%s"], text=True).strip()
+
+          def get_base_commit():
+              try:
+                  return subprocess.check_output(["git", "rev-parse", "HEAD~1"], text=True).strip()
+              except Exception:
+                  return None
+
+          def load_json_at(commit, path):
+              if not commit:
+                  return {}
+              try:
+                  raw = subprocess.check_output(["git", "show", f"{commit}:{path}"], text=True)
+              except Exception:
+                  return {}
+              try:
+                  return json.loads(raw)
+              except Exception:
+                  return {}
+
+          def load_json_now(path):
+              try:
+                  return json.loads(Path(path).read_text(encoding="utf-8"))
+              except Exception:
+                  return {}
+
+          def normalize_value(value):
+              if value is None:
+                  return None
+              if isinstance(value, (dict, list)):
+                  return json.dumps(value, ensure_ascii=False)
+              return value
+
+          def diff_json(before, after):
+              changes = []
+              keys = set(before.keys()) | set(after.keys())
+              for key in sorted(keys):
+                  if key not in before:
+                      changes.append({
+                          "change_type": "added",
+                          "key": key,
+                          "old_value": None,
+                          "new_value": normalize_value(after.get(key)),
+                      })
+                  elif key not in after:
+                      changes.append({
+                          "change_type": "removed",
+                          "key": key,
+                          "old_value": normalize_value(before.get(key)),
+                          "new_value": None,
+                      })
+                  elif before.get(key) != after.get(key):
+                      changes.append({
+                          "change_type": "modified",
+                          "key": key,
+                          "old_value": normalize_value(before.get(key)),
+                          "new_value": normalize_value(after.get(key)),
+                      })
+              return changes
+
+          def post_changes(file_path, file_type):
+              base_commit = get_base_commit()
+              before = load_json_at(base_commit, file_path)
+              after = load_json_now(file_path)
+              changes = diff_json(before, after)
+              if not changes:
+                  print(f"No changes detected for {file_path}")
+                  return
+
+              payload = {
+                  "commit": COMMIT_URL or COMMIT_SHA,
+                  "message": MESSAGE or "Translation changes",
+                  "file_type": file_type,
+                  "changes": changes,
+                  "notify_translators": True,
+              }
+
+              body = json.dumps(payload).encode("utf-8")
+              url = f"{API_BASE}/v1/webhooks/translations"
+              req = urllib.request.Request(url, data=body, method="POST")
+              req.add_header("Content-Type", "application/json")
+              req.add_header("X-Clovord-Build-Token", TOKEN)
+              with urllib.request.urlopen(req, timeout=20) as res:
+                  print(f"Webhook status for {file_path}:", res.status)
+
+          if os.path.exists("API/en.json") and os.environ.get("API_EN_CHANGED") == "true":
+              post_changes("API/en.json", "api")
+          if os.path.exists("WebApp/en_US.json") and os.environ.get("WEBAPP_EN_CHANGED") == "true":
+              post_changes("WebApp/en_US.json", "frontend")
+          PY
 
   sync-api:
     needs: detect
