@@ -95,6 +95,7 @@ jobs:
           git commit -m "Sync translations (Downloads)" || echo "No changes"
           git push
 
+          
   sync-desktop:
     needs: detect
     if: needs.detect.outputs.desktop == 'true'
