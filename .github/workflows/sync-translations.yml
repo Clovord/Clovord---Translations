@@ -101,9 +101,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Merge base + desktop overrides
-        run: |
-          node tools/merge-translations.js WebApp DesktopApp .tmp/desktop
       - name: Sync Desktop translations
         env:
           TOKEN: ${{ secrets.CLOVORD_SYNC_TOKEN }}
@@ -111,7 +108,7 @@ jobs:
           git clone https://x-access-token:${TOKEN}@github.com/Clovord/Clovord---Desktop.git target
           rm -rf target/resources/overrides/translations
           mkdir -p target/resources/overrides/translations
-          cp -R .tmp/desktop/* target/resources/overrides/translations/
+          cp -R DesktopApp/* target/resources/overrides/translations/
           cd target
           git config user.email "bot@clovord.com"
           git config user.name "Clovord Bot"
@@ -125,9 +122,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Merge base + mobile overrides
-        run: |
-          node tools/merge-translations.js WebApp MobileApp .tmp/mobile
       - name: Sync Mobile translations
         env:
           TOKEN: ${{ secrets.CLOVORD_SYNC_TOKEN }}
@@ -135,7 +129,7 @@ jobs:
           git clone https://x-access-token:${TOKEN}@github.com/Clovord/Clovord---Mobile.git target
           rm -rf target/assets/translations
           mkdir -p target/assets/translations
-          cp -R .tmp/mobile/* target/assets/translations/
+          cp -R MobileApp/* target/assets/translations/
           cd target
           git config user.email "bot@clovord.com"
           git config user.name "Clovord Bot"
