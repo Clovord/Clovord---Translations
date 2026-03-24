@@ -554,6 +554,7 @@
   "404090": "Unknown Product",
   "404091": "Unknown Endpoint",
   "404092": "There are no domains matching this query",
+  "405000": "Method Not Allowed",
   "409000": "There was a conflict with the current state of the resource",
   "409001": "No free discriminator available for this name. Try a different name.",
   "409002": "The bot account linked with the applications is missing the Bot Flag, which is required to use the bot API",
