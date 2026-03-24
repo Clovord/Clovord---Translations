@@ -1,0 +1,144 @@
+name: Sync Translations
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  detect:
+    runs-on: ubuntu-latest
+    outputs:
+      api: ${{ steps.filter.outputs.api }}
+      webapp: ${{ steps.filter.outputs.webapp }}
+      downloads: ${{ steps.filter.outputs.downloads }}
+      desktop: ${{ steps.filter.outputs.desktop }}
+      mobile: ${{ steps.filter.outputs.mobile }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            api:
+              - "API/**"
+            webapp:
+              - "WebApp/**"
+            downloads:
+              - "DownloadPage/**"
+            desktop:
+              - "DesktopApp/**"
+              - "WebApp/**"
+            mobile:
+              - "MobileApp/**"
+              - "WebApp/**"
+
+  sync-api:
+    needs: detect
+    if: needs.detect.outputs.api == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Sync API translations
+        env:
+          TOKEN: ${{ secrets.CLOVORD_SYNC_TOKEN }}
+        run: |
+          git clone https://x-access-token:${TOKEN}@github.com/Clovord/Clovord---API.git target
+          rm -rf target/translations
+          mkdir -p target/translations
+          cp -R API/* target/translations/
+          cd target
+          git config user.email "bot@clovord.com"
+          git config user.name "Clovord Bot"
+          git add .
+          git commit -m "Sync translations (API)" || echo "No changes"
+          git push
+
+  sync-webapp:
+    needs: detect
+    if: needs.detect.outputs.webapp == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Sync WebApp translations
+        env:
+          TOKEN: ${{ secrets.CLOVORD_SYNC_TOKEN }}
+        run: |
+          git clone https://x-access-token:${TOKEN}@github.com/Clovord/Clovord---Website---Main.git target
+          rm -rf target/dist/assets/translations
+          mkdir -p target/dist/assets/translations
+          cp -R WebApp/* target/dist/assets/translations/
+          cd target
+          git config user.email "bot@clovord.com"
+          git config user.name "Clovord Bot"
+          git add .
+          git commit -m "Sync translations (WebApp)" || echo "No changes"
+          git push
+
+  sync-downloads:
+    needs: detect
+    if: needs.detect.outputs.downloads == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Sync Downloads translations
+        env:
+          TOKEN: ${{ secrets.CLOVORD_SYNC_TOKEN }}
+        run: |
+          git clone https://x-access-token:${TOKEN}@github.com/Clovord/Clovord---Website---Downloads.git target
+          rm -rf target/assets/translations
+          mkdir -p target/assets/translations
+          cp -R DownloadPage/* target/assets/translations/
+          cd target
+          git config user.email "bot@clovord.com"
+          git config user.name "Clovord Bot"
+          git add .
+          git commit -m "Sync translations (Downloads)" || echo "No changes"
+          git push
+
+  sync-desktop:
+    needs: detect
+    if: needs.detect.outputs.desktop == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Merge base + desktop overrides
+        run: |
+          node tools/merge-translations.js WebApp DesktopApp .tmp/desktop
+      - name: Sync Desktop translations
+        env:
+          TOKEN: ${{ secrets.CLOVORD_SYNC_TOKEN }}
+        run: |
+          git clone https://x-access-token:${TOKEN}@github.com/Clovord/Clovord---Desktop.git target
+          rm -rf target/resources/overrides/translations
+          mkdir -p target/resources/overrides/translations
+          cp -R .tmp/desktop/* target/resources/overrides/translations/
+          cd target
+          git config user.email "bot@clovord.com"
+          git config user.name "Clovord Bot"
+          git add .
+          git commit -m "Sync translations (Desktop)" || echo "No changes"
+          git push
+
+  sync-mobile:
+    needs: detect
+    if: needs.detect.outputs.mobile == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Merge base + mobile overrides
+        run: |
+          node tools/merge-translations.js WebApp MobileApp .tmp/mobile
+      - name: Sync Mobile translations
+        env:
+          TOKEN: ${{ secrets.CLOVORD_SYNC_TOKEN }}
+        run: |
+          git clone https://x-access-token:${TOKEN}@github.com/Clovord/Clovord---Mobile.git target
+          rm -rf target/assets/translations
+          mkdir -p target/assets/translations
+          cp -R .tmp/mobile/* target/assets/translations/
+          cd target
+          git config user.email "bot@clovord.com"
+          git config user.name "Clovord Bot"
+          git add .
+          git commit -m "Sync translations (Mobile)" || echo "No changes"
+          git push
