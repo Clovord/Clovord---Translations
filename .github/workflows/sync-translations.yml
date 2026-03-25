@@ -241,7 +241,14 @@ jobs:
           git clone https://x-access-token:${TOKEN}@github.com/Clovord/Clovord---Desktop.git target
           rm -rf target/resources/overrides/translations
           mkdir -p target/resources/overrides/translations
-          cp -R DesktopApp/* target/resources/overrides/translations/
+
+          if [ -d "DesktopApp" ]; then
+            cp -R DesktopApp/. target/resources/overrides/translations/
+          fi
+          if [ -d "WebApp" ]; then
+            cp -R WebApp/. target/resources/overrides/translations/
+          fi
+
           cd target
           git config user.email "bot@clovord.com"
           git config user.name "Clovord Bot"
@@ -262,7 +269,14 @@ jobs:
           git clone https://x-access-token:${TOKEN}@github.com/Clovord/Clovord---Mobile.git target
           rm -rf target/assets/translations
           mkdir -p target/assets/translations
-          cp -R MobileApp/* target/assets/translations/
+
+          if [ -d "MobileApp" ]; then
+            cp -R MobileApp/. target/assets/translations/
+          fi
+          if [ -d "WebApp" ]; then
+            cp -R WebApp/. target/assets/translations/
+          fi
+
           cd target
           git config user.email "bot@clovord.com"
           git config user.name "Clovord Bot"
