@@ -202,7 +202,7 @@ jobs:
           git config user.email "bot@clovord.com"
           git config user.name "Clovord Bot"
           git status --short
-          git add .
+          git add -A -f dist/assets/translations
           git commit -m "Sync translations (WebApp)" || echo "No changes"
           git push
 
