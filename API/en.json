@@ -674,6 +674,7 @@
   "503043": "Unable to pay invoice",
   "504032": "Customer ID lookup timeout",
   "504033": "Customer upsert timeout",
+  "response_note_language_missing": "This response currently only supports the $1 language",
   "email_password_reset_subject": "Reset your Clovord password",
   "email_password_reset_title": "Password Reset Request",
   "email_greeting": "Hello",
