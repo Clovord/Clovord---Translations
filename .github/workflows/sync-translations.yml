@@ -191,20 +191,26 @@ jobs:
         env:
           TOKEN: ${{ secrets.ORG_SYNC_TOKEN }}
         run: |
+          ROOT_DIR="$PWD"
           git clone https://x-access-token:${TOKEN}@github.com/Clovord/Clovord---Website---Main.git target
-          mkdir -p target/dist/assets/translations
+          cd target
+          git checkout master
+          mkdir -p dist/assets/translations
 
           # Keep directory but fully sync JSON payloads (also handles deletions).
-          find target/dist/assets/translations -maxdepth 1 -type f -name "*.json" -delete
-          cp -f WebApp/*.json target/dist/assets/translations/
+          find dist/assets/translations -maxdepth 1 -type f -name "*.json" -delete
+          cp -f "$ROOT_DIR"/WebApp/*.json dist/assets/translations/
 
-          cd target
           git config user.email "bot@clovord.com"
           git config user.name "Clovord Bot"
           git status --short
           git add -A -f dist/assets/translations
-          git commit -m "Sync translations (WebApp)" || echo "No changes"
-          git push
+          if git diff --cached --quiet; then
+            echo "No changes"
+            exit 0
+          fi
+          git commit -m "Sync translations (WebApp)"
+          git push origin master
 
   sync-downloads:
     needs: detect
