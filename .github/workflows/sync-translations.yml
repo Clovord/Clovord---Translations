@@ -193,10 +193,15 @@ jobs:
         run: |
           git clone https://x-access-token:${TOKEN}@github.com/Clovord/Clovord---Website---Main.git target
           mkdir -p target/dist/assets/translations
-          cp -R WebApp/* target/dist/assets/translations/
+
+          # Keep directory but fully sync JSON payloads (also handles deletions).
+          find target/dist/assets/translations -maxdepth 1 -type f -name "*.json" -delete
+          cp -f WebApp/*.json target/dist/assets/translations/
+
           cd target
           git config user.email "bot@clovord.com"
           git config user.name "Clovord Bot"
+          git status --short
           git add .
           git commit -m "Sync translations (WebApp)" || echo "No changes"
           git push
