@@ -192,7 +192,6 @@ jobs:
           TOKEN: ${{ secrets.ORG_SYNC_TOKEN }}
         run: |
           git clone https://x-access-token:${TOKEN}@github.com/Clovord/Clovord---Website---Main.git target
-          rm -rf target/dist/assets/translations
           mkdir -p target/dist/assets/translations
           cp -R WebApp/* target/dist/assets/translations/
           cd target
