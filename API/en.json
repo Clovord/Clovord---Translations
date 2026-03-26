@@ -557,7 +557,7 @@
   "404089": "Unknown Wishlist",
   "404090": "Unknown Product",
   "404091": "Unknown Endpoint",
-  "404092": "There are no domains matching this query",
+  "404092": "We were not able to find any records that match the provided query",
   "405000": "Method Not Allowed",
   "409000": "There was a conflict with the current state of the resource",
   "409001": "No free discriminator available for this name. Try a different name.",
