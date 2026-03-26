@@ -170,16 +170,66 @@ jobs:
         env:
           TOKEN: ${{ secrets.ORG_SYNC_TOKEN }}
         run: |
+          ROOT_DIR="$PWD"
+          BRANCH="automation/sync-api-translations"
+
           git clone https://x-access-token:${TOKEN}@github.com/Clovord/Clovord---API.git target
-          rm -rf target/translations
-          mkdir -p target/translations
-          cp -R API/* target/translations/
           cd target
+
           git config user.email "bot@clovord.com"
           git config user.name "Clovord Bot"
-          git add .
-          git commit -m "Sync translations (API)" || echo "No changes"
-          git push
+          git fetch origin "${BRANCH}" || true
+
+          if git show-ref --verify --quiet "refs/remotes/origin/${BRANCH}"; then
+            git checkout -B "${BRANCH}" "origin/${BRANCH}"
+          else
+            git checkout -B "${BRANCH}" origin/main
+          fi
+
+          rm -rf translations
+          mkdir -p translations
+          cp -R "$ROOT_DIR"/API/* translations/
+
+          git add -A translations
+          if git diff --cached --quiet; then
+            echo "No changes"
+            exit 0
+          fi
+
+          git commit -m "Sync translations (API)"
+          git push origin "${BRANCH}" --force-with-lease
+
+          export GH_TOKEN="${TOKEN}"
+          PR_NUMBER=$(gh pr list \
+            --repo Clovord/Clovord---API \
+            --head "${BRANCH}" \
+            --base main \
+            --state open \
+            --json number \
+            --jq '.[0].number')
+
+          if [ -z "${PR_NUMBER}" ]; then
+            gh pr create \
+              --repo Clovord/Clovord---API \
+              --base main \
+              --head "${BRANCH}" \
+              --title "Sync translations (API)" \
+              --body "Automated translation sync from Clovord---Translations."
+
+            PR_NUMBER=$(gh pr list \
+              --repo Clovord/Clovord---API \
+              --head "${BRANCH}" \
+              --base main \
+              --state open \
+              --json number \
+              --jq '.[0].number')
+          fi
+
+          gh pr merge \
+            --repo Clovord/Clovord---API \
+            --auto \
+            --squash \
+            "${PR_NUMBER}"
 
   sync-webapp:
     needs: detect
