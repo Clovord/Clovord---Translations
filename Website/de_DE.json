@@ -3634,6 +3634,8 @@
     "m7Qw8LrPz1": "Zusaetzliche Metadaten fuer den Domain-Eintrag",
     "J6pNm4QxL0": "Zeitstempel der letzten Aktualisierung",
     "b2VxQ7mLp9": "Zeitstempel, wann die Domain hinzugefuegt wurde",
+    "P3kLm7xQdV": "Bedrohungs-Konfidenzwert von 0 bis 100; hoehere Werte bedeuten hoehere Gewissheit",
+    "B9xQm4rLzW": "Bitmaske-Integer, der Bedrohungs- und Vertrauenseigenschaften der Domain codiert",
     "Q7wLm2VxP9": "Domain-Endpunkte",
     "n0XvQ1pLm7": "Alle Endpunkte zu Domains",
     "p6LmQ2xVw1": "Domains auflisten",
