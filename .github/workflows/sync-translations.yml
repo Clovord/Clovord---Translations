@@ -225,11 +225,20 @@ jobs:
               --jq '.[0].number')
           fi
 
-          gh pr merge \
+          MERGE_OUTPUT=$(gh pr merge \
             --repo Clovord/Clovord---API \
             --auto \
             --squash \
-            "${PR_NUMBER}"
+            "${PR_NUMBER}" 2>&1) || MERGE_STATUS=$?
+
+          if [ "${MERGE_STATUS:-0}" -ne 0 ]; then
+            echo "${MERGE_OUTPUT}"
+            if printf '%s' "${MERGE_OUTPUT}" | grep -qi "Protected branch rules not configured for this branch"; then
+              echo "Auto-merge is not available for the target branch. PR #${PR_NUMBER} was created/updated and left open."
+            else
+              exit "${MERGE_STATUS}"
+            fi
+          fi
 
   sync-webapp:
     needs: detect
