@@ -1475,7 +1475,7 @@
     "J6pNm4QxL0": "Timestamp of the last update",
     "b2VxQ7mLp9": "Timestamp of when the domain was added",
     "P3kLm7xQdV": "Threat confidence score from 0 to 100; higher values indicate greater certainty",
-    "B9xQm4rLzW": "Bitmask integer encoding domain threat and trust properties",
+    "B9xQm4rLzW": "Bitmask integer encoding domain threat and trust properties. See the <a href=\"#domain-objects--domain-flags\">Domain Flags</a> section for details.",
     "Q7wLm2VxP9": "Domain Endpoints",
     "n0XvQ1pLm7": "All endpoints regarding to domains",
     "p6LmQ2xVw1": "List domains",
