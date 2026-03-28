@@ -234,7 +234,12 @@ jobs:
           if [ "${MERGE_STATUS:-0}" -ne 0 ]; then
             echo "${MERGE_OUTPUT}"
             if printf '%s' "${MERGE_OUTPUT}" | grep -qi "Protected branch rules not configured for this branch"; then
-              echo "Auto-merge is not available for the target branch. PR #${PR_NUMBER} was created/updated and left open."
+              echo "Auto-merge is not available for the target branch. Falling back to immediate squash merge for PR #${PR_NUMBER}."
+              gh pr merge \
+                --repo Clovord/Clovord---API \
+                --squash \
+                --delete-branch \
+                "${PR_NUMBER}"
             else
               exit "${MERGE_STATUS}"
             fi
