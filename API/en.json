@@ -170,7 +170,7 @@
   "400153": "Email contains unallowed domains",
   "400154": "Email contains unallowed addresses",
   "401000": "Unauthorized",
-  "401001": "Missing User/Bot token",
+  "401001": "Missing or Invalid token",
   "401002": "Invalid MFA token",
   "401003": "Invalid webhook secret",
   "401004": "Token invalid or expired",
