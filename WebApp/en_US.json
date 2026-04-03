@@ -1796,5 +1796,9 @@
     "A5qVx1Lm9RpN": "payload is not supported for 207* responses/errors and items is only supported for 207*",
     "W2mQp8Lv3XrT": "Response selection",
     "J7vLp2Qm6XnD": "Top-level code that starts with 207 uses Multi-Status envelope (items[], HTTP 207)",
-    "F4xQm9Lp1VtR": "Top-level codes not starting with 207 use standard envelope (data for success, errors for errors)"
+    "F4xQm9Lp1VtR": "Top-level codes not starting with 207 use standard envelope (data for success, errors for errors)",
+    "coNpvBbtUo": "Conflict",
+    "LzHcBiJLWW": "The request encountered a conflict with the current state of the server, repeating the request wont change anything",
+    "ASeHcoNRVU": "Gone",
+    "kXFsQrUtVG": "The request contains something that is either no longer available or will be removed in the future. Check the \" Code\" and \"Code Message\" for more details. If you receive this code in any response, read the Docs for the endpoint and take action immediately or your application may break in the future"
 }
