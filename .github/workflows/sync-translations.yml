@@ -199,6 +199,11 @@ jobs:
           git commit -m "Sync translations (API)"
           git push origin "${BRANCH}" --force-with-lease
 
+          # Sync branch with main to avoid "Head branch out of date" error
+          git fetch origin main
+          git rebase origin/main
+          git push origin "${BRANCH}" --force-with-lease
+
           export GH_TOKEN="${TOKEN}"
           PR_NUMBER=$(gh pr list \
             --repo Clovord/Clovord---API \
