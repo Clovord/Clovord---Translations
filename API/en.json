@@ -16,7 +16,7 @@
   "204001": "Request completed successfully with no content",
   "207000": "Multi-Status",
   "207001": "MultiStatus Response - Normal",
-  "207002": "MultiStatus Response - Inherits important Note",
+  "207002": "MultiStatus Response - Warning",
   "400000": "Bad Request",
   "400001": "Maximum number of guilds reached ({maxGuilds})",
   "400002": "Maximum number of friends reached ({maxFriends})",
