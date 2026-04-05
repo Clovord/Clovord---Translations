@@ -231,8 +231,11 @@ jobs:
             --squash \
             "${PR_NUMBER}" 2>&1) || MERGE_STATUS=$?
 
+          echo "MERGE_STATUS: ${MERGE_STATUS:-0}"
+          echo "MERGE_OUTPUT: ${MERGE_OUTPUT}"
+
           if [ "${MERGE_STATUS:-0}" -ne 0 ]; then
-            echo "${MERGE_OUTPUT}"
+            echo "PR merge failed with status ${MERGE_STATUS:-0}"
             if printf '%s' "${MERGE_OUTPUT}" | grep -qi "Protected branch rules not configured for this branch"; then
               echo "Auto-merge is not available for the target branch. Falling back to immediate squash merge for PR #${PR_NUMBER}."
               gh pr merge \
