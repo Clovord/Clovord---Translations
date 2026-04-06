@@ -65,7 +65,7 @@ jobs:
           import urllib.request
           import urllib.error
 
-          API_BASE = (os.environ.get("API_BASE_URL") or "https://api.clovord.com").rstrip("/")
+          API_BASE = (os.environ.get("API_BASE_URL") or "https://clovord.com/api").rstrip("/")
           TOKEN = os.environ.get("BUILD_WEBHOOK_TOKEN", "")
           COMMIT_SHA = os.environ.get("GITHUB_SHA", "").strip()
           COMMIT_URL = f"https://github.com/Clovord/Clovord---Translations/commit/{COMMIT_SHA}" if COMMIT_SHA else ""
@@ -264,6 +264,7 @@ jobs:
           TOKEN: ${{ secrets.ORG_SYNC_TOKEN }}
         run: |
           ROOT_DIR="$PWD"
+          SOURCE_SHA="${GITHUB_SHA}"
           git clone https://x-access-token:${TOKEN}@github.com/Clovord/Clovord---Website---Main.git target
           cd target
           git checkout master
@@ -272,6 +273,26 @@ jobs:
           # Keep directory but fully sync JSON payloads (also handles deletions).
           find dist/assets/translations -maxdepth 1 -type f -name "*.json" -delete
           cp -f "$ROOT_DIR"/WebApp/*.json dist/assets/translations/
+
+          # Write a dedicated translation manifest version so clients can bust translation cache
+          # even when script/style filenames stay unchanged.
+          python - <<'PY'
+          import json
+          import os
+          from datetime import datetime, timezone
+          from pathlib import Path
+
+          source_sha = (os.environ.get("SOURCE_SHA") or "").strip()
+          version = datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S")
+          payload = {
+              "version": version,
+              "source_commit": source_sha,
+              "updated_at": datetime.now(timezone.utc).replace(microsecond=0).isoformat(),
+          }
+          out = Path("dist/assets/translations/manifest.json")
+          out.write_text(json.dumps(payload, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
+          print("Wrote", out)
+          PY
 
           git config user.email "bot@clovord.com"
           git config user.name "Clovord Bot"
