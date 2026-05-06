@@ -1,11 +1,20 @@
-name: Sync Translations
+﻿name: Sync Translations
 
 on:
   push:
     branches: [main]
 
 jobs:
+  validate-json:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate JSON files are non-empty and parseable
+        run: |
+          python scripts/validate_translations.py
+
   detect:
+    needs: validate-json
     runs-on: ubuntu-latest
     outputs:
       api: ${{ steps.filter.outputs.api }}
@@ -15,7 +24,7 @@ jobs:
       mobile: ${{ steps.filter.outputs.mobile }}
     steps:
       - uses: actions/checkout@v4
-      - uses: dorny/paths-filter@v3
+      - uses: dorny/paths-filter@6852f92c20ea7fd3b0c25de3b5112db3a98da050
         id: filter
         with:
           filters: |
@@ -40,12 +49,18 @@ jobs:
       - uses: actions/checkout@v4
       - name: Sync API translations
         env:
-          TOKEN: ${{ secrets.ORG_SYNC_TOKEN }}
+          TOKEN: ${{ secrets.SYNC_API_TOKEN }}
         run: |
           ROOT_DIR="$PWD"
           BRANCH="automation/sync-api-translations"
+          BASE_BRANCH="main"
+          REPO="Clovord/Clovord---API"
 
-          git clone https://x-access-token:${TOKEN}@github.com/Clovord/Clovord---API.git target
+          AUTH_HEADER=$(printf "x-access-token:%s" "$TOKEN" | base64 | tr -d '\n')
+          git config --global http.https://github.com/.extraheader "AUTHORIZATION: basic ${AUTH_HEADER}"
+          trap 'git config --global --unset-all http.https://github.com/.extraheader || true' EXIT
+
+          git clone "https://github.com/${REPO}.git" target
           cd target
 
           git config user.email "bot@clovord.com"
@@ -55,8 +70,10 @@ jobs:
           if git show-ref --verify --quiet "refs/remotes/origin/${BRANCH}"; then
             git checkout -B "${BRANCH}" "origin/${BRANCH}"
           else
-            git checkout -B "${BRANCH}" origin/main
+            git checkout -B "${BRANCH}" "origin/${BASE_BRANCH}"
           fi
+
+          python "$ROOT_DIR/scripts/require_codeowners.py" --repo-dir "$PWD" --required-path "translations/"
 
           rm -rf translations
           mkdir -p translations
@@ -71,58 +88,70 @@ jobs:
           git commit -m "Sync translations (API)"
           git push origin "${BRANCH}" --force-with-lease
 
-          # Sync branch with main to avoid "Head branch out of date" error
-          git fetch origin main
-          git rebase origin/main
-          git push origin "${BRANCH}" --force-with-lease
+          rebase_push_success=0
+          for attempt in 1 2 3; do
+            git fetch origin "${BASE_BRANCH}"
+            if ! git rebase "origin/${BASE_BRANCH}"; then
+              git rebase --abort || true
+              if [ "$attempt" -lt 3 ]; then
+                sleep $((attempt * 2))
+                continue
+              fi
+              echo "Rebase failed after ${attempt} attempts"
+              exit 1
+            fi
 
-          export GH_TOKEN="${TOKEN}"
+            if git push origin "${BRANCH}" --force-with-lease; then
+              rebase_push_success=1
+              break
+            fi
+
+            if [ "$attempt" -lt 3 ]; then
+              sleep $((attempt * 2))
+            fi
+          done
+
+          if [ "$rebase_push_success" -ne 1 ]; then
+            echo "Failed to push rebased branch after retries"
+            exit 1
+          fi
+
+          export GH_TOKEN="$TOKEN"
           PR_NUMBER=$(gh pr list \
-            --repo Clovord/Clovord---API \
+            --repo "$REPO" \
             --head "${BRANCH}" \
-            --base main \
+            --base "${BASE_BRANCH}" \
             --state open \
             --json number \
             --jq '.[0].number')
 
           if [ -z "${PR_NUMBER}" ]; then
             gh pr create \
-              --repo Clovord/Clovord---API \
-              --base main \
+              --repo "$REPO" \
+              --base "${BASE_BRANCH}" \
               --head "${BRANCH}" \
               --title "Sync translations (API)" \
               --body "Automated translation sync from Clovord---Translations."
 
             PR_NUMBER=$(gh pr list \
-              --repo Clovord/Clovord---API \
+              --repo "$REPO" \
               --head "${BRANCH}" \
-              --base main \
+              --base "${BASE_BRANCH}" \
               --state open \
               --json number \
               --jq '.[0].number')
           fi
 
           MERGE_OUTPUT=$(gh pr merge \
-            --repo Clovord/Clovord---API \
+            --repo "$REPO" \
             --auto \
             --squash \
+            --delete-branch \
             "${PR_NUMBER}" 2>&1) || MERGE_STATUS=$?
 
-          echo "MERGE_STATUS: ${MERGE_STATUS:-0}"
-          echo "MERGE_OUTPUT: ${MERGE_OUTPUT}"
-
           if [ "${MERGE_STATUS:-0}" -ne 0 ]; then
-            echo "PR merge failed with status ${MERGE_STATUS:-0}"
-            if printf '%s' "${MERGE_OUTPUT}" | grep -qi "Protected branch rules not configured for this branch"; then
-              echo "Auto-merge is not available for the target branch. Falling back to immediate squash merge for PR #${PR_NUMBER}."
-              gh pr merge \
-                --repo Clovord/Clovord---API \
-                --squash \
-                --delete-branch \
-                "${PR_NUMBER}"
-            else
-              exit "${MERGE_STATUS}"
-            fi
+            echo "${MERGE_OUTPUT}"
+            exit "${MERGE_STATUS}"
           fi
 
   sync-webapp:
@@ -133,21 +162,46 @@ jobs:
       - uses: actions/checkout@v4
       - name: Sync WebApp translations
         env:
-          TOKEN: ${{ secrets.ORG_SYNC_TOKEN }}
+          TOKEN: ${{ secrets.SYNC_WEBAPP_TOKEN }}
+          SOURCE_SHA: ${{ github.sha }}
         run: |
           ROOT_DIR="$PWD"
-          SOURCE_SHA="${GITHUB_SHA}"
-          git clone https://x-access-token:${TOKEN}@github.com/Clovord/Clovord---Website---Main.git target
+          BRANCH="automation/sync-webapp-translations"
+          BASE_BRANCH="master"
+          REPO="Clovord/Clovord---Website---Main"
+
+          AUTH_HEADER=$(printf "x-access-token:%s" "$TOKEN" | base64 | tr -d '\n')
+          git config --global http.https://github.com/.extraheader "AUTHORIZATION: basic ${AUTH_HEADER}"
+          trap 'git config --global --unset-all http.https://github.com/.extraheader || true' EXIT
+
+          git clone "https://github.com/${REPO}.git" target
           cd target
-          git checkout master
+
+          git config user.email "bot@clovord.com"
+          git config user.name "Clovord Bot"
+          git fetch origin "${BRANCH}" || true
+
+          if git show-ref --verify --quiet "refs/remotes/origin/${BRANCH}"; then
+            git checkout -B "${BRANCH}" "origin/${BRANCH}"
+          else
+            git checkout -B "${BRANCH}" "origin/${BASE_BRANCH}"
+          fi
+
+          python "$ROOT_DIR/scripts/require_codeowners.py" --repo-dir "$PWD" --required-path "dist/assets/translations/"
+
+          if ! compgen -G "$ROOT_DIR/WebApp/*.json" > /dev/null; then
+            echo "No source translation files found in $ROOT_DIR/WebApp"
+            exit 1
+          fi
+
+          TMP_TRANSLATIONS_DIR=$(mktemp -d)
+          cp -f "$ROOT_DIR"/WebApp/*.json "$TMP_TRANSLATIONS_DIR"/
+
           mkdir -p dist/assets/translations
-
-          # Keep directory but fully sync JSON payloads (also handles deletions).
           find dist/assets/translations -maxdepth 1 -type f -name "*.json" -delete
-          cp -f "$ROOT_DIR"/WebApp/*.json dist/assets/translations/
+          cp -f "$TMP_TRANSLATIONS_DIR"/*.json dist/assets/translations/
+          rm -rf "$TMP_TRANSLATIONS_DIR"
 
-          # Write a dedicated translation manifest version so clients can bust translation cache
-          # even when script/style filenames stay unchanged.
           python - <<'PY'
           import json
           import os
@@ -166,16 +220,55 @@ jobs:
           print("Wrote", out)
           PY
 
-          git config user.email "bot@clovord.com"
-          git config user.name "Clovord Bot"
-          git status --short
           git add -A -f dist/assets/translations
           if git diff --cached --quiet; then
             echo "No changes"
             exit 0
           fi
+
           git commit -m "Sync translations (WebApp)"
-          git push origin master
+          git push origin "${BRANCH}" --force-with-lease
+
+          git fetch origin "${BASE_BRANCH}"
+          git rebase "origin/${BASE_BRANCH}"
+          git push origin "${BRANCH}" --force-with-lease
+
+          export GH_TOKEN="$TOKEN"
+          PR_NUMBER=$(gh pr list \
+            --repo "$REPO" \
+            --head "${BRANCH}" \
+            --base "${BASE_BRANCH}" \
+            --state open \
+            --json number \
+            --jq '.[0].number')
+
+          if [ -z "${PR_NUMBER}" ]; then
+            gh pr create \
+              --repo "$REPO" \
+              --base "${BASE_BRANCH}" \
+              --head "${BRANCH}" \
+              --title "Sync translations (WebApp)" \
+              --body "Automated translation sync from Clovord---Translations."
+
+            PR_NUMBER=$(gh pr list \
+              --repo "$REPO" \
+              --head "${BRANCH}" \
+              --base "${BASE_BRANCH}" \
+              --state open \
+              --json number \
+              --jq '.[0].number')
+          fi
+
+          MERGE_OUTPUT=$(gh pr merge \
+            --repo "$REPO" \
+            --auto \
+            --squash \
+            "${PR_NUMBER}" 2>&1) || MERGE_STATUS=$?
+
+          if [ "${MERGE_STATUS:-0}" -ne 0 ]; then
+            echo "${MERGE_OUTPUT}"
+            exit "${MERGE_STATUS}"
+          fi
 
   sync-downloads:
     needs: detect
@@ -185,20 +278,86 @@ jobs:
       - uses: actions/checkout@v4
       - name: Sync Downloads translations
         env:
-          TOKEN: ${{ secrets.ORG_SYNC_TOKEN }}
+          TOKEN: ${{ secrets.SYNC_DOWNLOADS_TOKEN }}
         run: |
-          git clone https://x-access-token:${TOKEN}@github.com/Clovord/Clovord---Website---Downloads.git target
-          rm -rf target/assets/translations
-          mkdir -p target/assets/translations
-          cp -R DownloadPage/* target/assets/translations/
+          ROOT_DIR="$PWD"
+          BRANCH="automation/sync-downloads-translations"
+          BASE_BRANCH="master"
+          REPO="Clovord/Clovord---Website---Downloads"
+
+          AUTH_HEADER=$(printf "x-access-token:%s" "$TOKEN" | base64 | tr -d '\n')
+          git config --global http.https://github.com/.extraheader "AUTHORIZATION: basic ${AUTH_HEADER}"
+          trap 'git config --global --unset-all http.https://github.com/.extraheader || true' EXIT
+
+          git clone "https://github.com/${REPO}.git" target
           cd target
+
           git config user.email "bot@clovord.com"
           git config user.name "Clovord Bot"
-          git add .
-          git commit -m "Sync translations (Downloads)" || echo "No changes"
-          git push
+          git fetch origin "${BRANCH}" || true
 
-          
+          if git show-ref --verify --quiet "refs/remotes/origin/${BRANCH}"; then
+            git checkout -B "${BRANCH}" "origin/${BRANCH}"
+          else
+            git checkout -B "${BRANCH}" "origin/${BASE_BRANCH}"
+          fi
+
+          python "$ROOT_DIR/scripts/require_codeowners.py" --repo-dir "$PWD" --required-path "assets/translations/"
+
+          rm -rf assets/translations
+          mkdir -p assets/translations
+          cp -R "$ROOT_DIR"/DownloadPage/* assets/translations/
+
+          git add -A assets/translations
+          if git diff --cached --quiet; then
+            echo "No changes"
+            exit 0
+          fi
+
+          git commit -m "Sync translations (Downloads)"
+          git push origin "${BRANCH}" --force-with-lease
+
+          git fetch origin "${BASE_BRANCH}"
+          git rebase "origin/${BASE_BRANCH}"
+          git push origin "${BRANCH}" --force-with-lease
+
+          export GH_TOKEN="$TOKEN"
+          PR_NUMBER=$(gh pr list \
+            --repo "$REPO" \
+            --head "${BRANCH}" \
+            --base "${BASE_BRANCH}" \
+            --state open \
+            --json number \
+            --jq '.[0].number')
+
+          if [ -z "${PR_NUMBER}" ]; then
+            gh pr create \
+              --repo "$REPO" \
+              --base "${BASE_BRANCH}" \
+              --head "${BRANCH}" \
+              --title "Sync translations (Downloads)" \
+              --body "Automated translation sync from Clovord---Translations."
+
+            PR_NUMBER=$(gh pr list \
+              --repo "$REPO" \
+              --head "${BRANCH}" \
+              --base "${BASE_BRANCH}" \
+              --state open \
+              --json number \
+              --jq '.[0].number')
+          fi
+
+          MERGE_OUTPUT=$(gh pr merge \
+            --repo "$REPO" \
+            --auto \
+            --squash \
+            "${PR_NUMBER}" 2>&1) || MERGE_STATUS=$?
+
+          if [ "${MERGE_STATUS:-0}" -ne 0 ]; then
+            echo "${MERGE_OUTPUT}"
+            exit "${MERGE_STATUS}"
+          fi
+
   sync-desktop:
     needs: detect
     if: needs.detect.outputs.desktop == 'true'
@@ -207,25 +366,91 @@ jobs:
       - uses: actions/checkout@v4
       - name: Sync Desktop translations
         env:
-          TOKEN: ${{ secrets.ORG_SYNC_TOKEN }}
+          TOKEN: ${{ secrets.SYNC_DESKTOP_TOKEN }}
         run: |
-          git clone https://x-access-token:${TOKEN}@github.com/Clovord/Clovord---Desktop.git target
-          rm -rf target/resources/overrides/translations
-          mkdir -p target/resources/overrides/translations
+          ROOT_DIR="$PWD"
+          BRANCH="automation/sync-desktop-translations"
+          BASE_BRANCH="master"
+          REPO="Clovord/Clovord---Desktop"
 
-          if [ -d "DesktopApp" ]; then
-            cp -R DesktopApp/. target/resources/overrides/translations/
-          fi
-          if [ -d "WebApp" ]; then
-            cp -R WebApp/. target/resources/overrides/translations/
-          fi
+          AUTH_HEADER=$(printf "x-access-token:%s" "$TOKEN" | base64 | tr -d '\n')
+          git config --global http.https://github.com/.extraheader "AUTHORIZATION: basic ${AUTH_HEADER}"
+          trap 'git config --global --unset-all http.https://github.com/.extraheader || true' EXIT
 
+          git clone "https://github.com/${REPO}.git" target
           cd target
+
           git config user.email "bot@clovord.com"
           git config user.name "Clovord Bot"
-          git add .
-          git commit -m "Sync translations (Desktop)" || echo "No changes"
-          git push
+          git fetch origin "${BRANCH}" || true
+
+          if git show-ref --verify --quiet "refs/remotes/origin/${BRANCH}"; then
+            git checkout -B "${BRANCH}" "origin/${BRANCH}"
+          else
+            git checkout -B "${BRANCH}" "origin/${BASE_BRANCH}"
+          fi
+
+          python "$ROOT_DIR/scripts/require_codeowners.py" --repo-dir "$PWD" --required-path "resources/overrides/translations/"
+
+          rm -rf resources/overrides/translations
+          mkdir -p resources/overrides/translations
+
+          if [ -d "$ROOT_DIR/DesktopApp" ]; then
+            cp -R "$ROOT_DIR"/DesktopApp/. resources/overrides/translations/
+          fi
+          if [ -d "$ROOT_DIR/WebApp" ]; then
+            cp -R "$ROOT_DIR"/WebApp/. resources/overrides/translations/
+          fi
+
+          git add -A resources/overrides/translations
+          if git diff --cached --quiet; then
+            echo "No changes"
+            exit 0
+          fi
+
+          git commit -m "Sync translations (Desktop)"
+          git push origin "${BRANCH}" --force-with-lease
+
+          git fetch origin "${BASE_BRANCH}"
+          git rebase "origin/${BASE_BRANCH}"
+          git push origin "${BRANCH}" --force-with-lease
+
+          export GH_TOKEN="$TOKEN"
+          PR_NUMBER=$(gh pr list \
+            --repo "$REPO" \
+            --head "${BRANCH}" \
+            --base "${BASE_BRANCH}" \
+            --state open \
+            --json number \
+            --jq '.[0].number')
+
+          if [ -z "${PR_NUMBER}" ]; then
+            gh pr create \
+              --repo "$REPO" \
+              --base "${BASE_BRANCH}" \
+              --head "${BRANCH}" \
+              --title "Sync translations (Desktop)" \
+              --body "Automated translation sync from Clovord---Translations."
+
+            PR_NUMBER=$(gh pr list \
+              --repo "$REPO" \
+              --head "${BRANCH}" \
+              --base "${BASE_BRANCH}" \
+              --state open \
+              --json number \
+              --jq '.[0].number')
+          fi
+
+          MERGE_OUTPUT=$(gh pr merge \
+            --repo "$REPO" \
+            --auto \
+            --squash \
+            "${PR_NUMBER}" 2>&1) || MERGE_STATUS=$?
+
+          if [ "${MERGE_STATUS:-0}" -ne 0 ]; then
+            echo "${MERGE_OUTPUT}"
+            exit "${MERGE_STATUS}"
+          fi
 
   sync-mobile:
     needs: detect
@@ -235,22 +460,88 @@ jobs:
       - uses: actions/checkout@v4
       - name: Sync Mobile translations
         env:
-          TOKEN: ${{ secrets.ORG_SYNC_TOKEN }}
+          TOKEN: ${{ secrets.SYNC_MOBILE_TOKEN }}
         run: |
-          git clone https://x-access-token:${TOKEN}@github.com/Clovord/Clovord---Mobile.git target
-          rm -rf target/assets/translations
-          mkdir -p target/assets/translations
+          ROOT_DIR="$PWD"
+          BRANCH="automation/sync-mobile-translations"
+          BASE_BRANCH="master"
+          REPO="Clovord/Clovord---Mobile"
 
-          if [ -d "MobileApp" ]; then
-            cp -R MobileApp/. target/assets/translations/
-          fi
-          if [ -d "WebApp" ]; then
-            cp -R WebApp/. target/assets/translations/
-          fi
+          AUTH_HEADER=$(printf "x-access-token:%s" "$TOKEN" | base64 | tr -d '\n')
+          git config --global http.https://github.com/.extraheader "AUTHORIZATION: basic ${AUTH_HEADER}"
+          trap 'git config --global --unset-all http.https://github.com/.extraheader || true' EXIT
 
+          git clone "https://github.com/${REPO}.git" target
           cd target
+
           git config user.email "bot@clovord.com"
           git config user.name "Clovord Bot"
-          git add .
-          git commit -m "Sync translations (Mobile)" || echo "No changes"
-          git push
+          git fetch origin "${BRANCH}" || true
+
+          if git show-ref --verify --quiet "refs/remotes/origin/${BRANCH}"; then
+            git checkout -B "${BRANCH}" "origin/${BRANCH}"
+          else
+            git checkout -B "${BRANCH}" "origin/${BASE_BRANCH}"
+          fi
+
+          python "$ROOT_DIR/scripts/require_codeowners.py" --repo-dir "$PWD" --required-path "assets/translations/"
+
+          rm -rf assets/translations
+          mkdir -p assets/translations
+
+          if [ -d "$ROOT_DIR/MobileApp" ]; then
+            cp -R "$ROOT_DIR"/MobileApp/. assets/translations/
+          fi
+          if [ -d "$ROOT_DIR/WebApp" ]; then
+            cp -R "$ROOT_DIR"/WebApp/. assets/translations/
+          fi
+
+          git add -A assets/translations
+          if git diff --cached --quiet; then
+            echo "No changes"
+            exit 0
+          fi
+
+          git commit -m "Sync translations (Mobile)"
+          git push origin "${BRANCH}" --force-with-lease
+
+          git fetch origin "${BASE_BRANCH}"
+          git rebase "origin/${BASE_BRANCH}"
+          git push origin "${BRANCH}" --force-with-lease
+
+          export GH_TOKEN="$TOKEN"
+          PR_NUMBER=$(gh pr list \
+            --repo "$REPO" \
+            --head "${BRANCH}" \
+            --base "${BASE_BRANCH}" \
+            --state open \
+            --json number \
+            --jq '.[0].number')
+
+          if [ -z "${PR_NUMBER}" ]; then
+            gh pr create \
+              --repo "$REPO" \
+              --base "${BASE_BRANCH}" \
+              --head "${BRANCH}" \
+              --title "Sync translations (Mobile)" \
+              --body "Automated translation sync from Clovord---Translations."
+
+            PR_NUMBER=$(gh pr list \
+              --repo "$REPO" \
+              --head "${BRANCH}" \
+              --base "${BASE_BRANCH}" \
+              --state open \
+              --json number \
+              --jq '.[0].number')
+          fi
+
+          MERGE_OUTPUT=$(gh pr merge \
+            --repo "$REPO" \
+            --auto \
+            --squash \
+            "${PR_NUMBER}" 2>&1) || MERGE_STATUS=$?
+
+          if [ "${MERGE_STATUS:-0}" -ne 0 ]; then
+            echo "${MERGE_OUTPUT}"
+            exit "${MERGE_STATUS}"
+          fi
