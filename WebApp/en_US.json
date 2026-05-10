@@ -1833,5 +1833,6 @@
     "coNpvBbtUo": "Conflict",
     "LzHcBiJLWW": "The request encountered a conflict with the current state of the server, repeating the request wont change anything",
     "ASeHcoNRVU": "Gone",
-    "kXFsQrUtVG": "The request contains something that is either no longer available or will be removed in the future. Check the \" Code\" and \"Code Message\" for more details. If you receive this code in any response, read the Docs for the endpoint and take action immediately or your application may break in the future"
+    "kXFsQrUtVG": "The request contains something that is either no longer available or will be removed in the future. Check the \" Code\" and \"Code Message\" for more details. If you receive this code in any response, read the Docs for the endpoint and take action immediately or your application may break in the future",
+    "CdSGVuaGcn": "Login with Discord"
 }
