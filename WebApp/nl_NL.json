@@ -1833,5 +1833,7 @@
   "coNpvBbtUo": "Conflict",
   "LzHcBiJLWW": "Het verzoek kwam een conflict tegen met de huidige staat van de server, herhalen van het verzoek zal niets veranderen",
   "ASeHcoNRVU": "Weg",
-  "kXFsQrUtVG": "Het verzoek bevat iets dat ofwel niet meer beschikbaar is of in de toekomst zal worden verwijderd. Controleer de \"Code\" en \"Code Bericht\" voor meer details. Als u deze code ontvangt in een reactie, lees de Docs voor het eindpunt en neem onmiddellijk actie of uw toepassing kan breken in de toekomst"
+  "kXFsQrUtVG": "Het verzoek bevat iets dat ofwel niet meer beschikbaar is of in de toekomst zal worden verwijderd. Controleer de \"Code\" en \"Code Bericht\" voor meer details. Als u deze code ontvangt in een reactie, lees de Docs voor het eindpunt en neem onmiddellijk actie of uw toepassing kan breken in de toekomst",
+  "A8kTz4LmQp2V": "Inloggen via koppelingen geslaagd, app wordt gestart.",
+  "N3wRp7XfLq5M": "Inloggen geslaagd, maar MFA is vereist."
 }
