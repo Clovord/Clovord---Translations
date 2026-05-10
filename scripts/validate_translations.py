@@ -72,11 +72,13 @@ def validate() -> list[str]:
                     )
 
     # Key-set drift guard: treat WebApp/en_US.json as source of truth.
+    # Missing keys in non-source locales are allowed so translation updates can
+    # follow after source-string changes. Orphan keys still fail validation.
     webapp_source = Path("WebApp/en_US.json")
     if webapp_source in payloads and isinstance(payloads[webapp_source], dict):
         source_keys = set(payloads[webapp_source].keys())
         max_orphan_keys = 0
-        max_missing_keys = 0
+        max_missing_keys = None
 
         for path, payload in payloads.items():
             if path == webapp_source or path.parent != webapp_source.parent:
@@ -91,7 +93,7 @@ def validate() -> list[str]:
             if len(orphan_keys) > max_orphan_keys:
                 failures.append(f"{path}: {len(orphan_keys)} orphan keys (limit {max_orphan_keys})")
 
-            if len(missing_keys) > max_missing_keys:
+            if max_missing_keys is not None and len(missing_keys) > max_missing_keys:
                 failures.append(f"{path}: {len(missing_keys)} missing keys (limit {max_missing_keys})")
     else:
         failures.append("WebApp/en_US.json: missing or invalid source locale for key-set drift check")
