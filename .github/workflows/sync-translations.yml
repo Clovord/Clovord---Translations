@@ -56,11 +56,12 @@ jobs:
           BASE_BRANCH="main"
           REPO="Clovord/Clovord---API"
 
-          AUTH_HEADER=$(printf "x-access-token:%s" "$TOKEN" | base64 | tr -d '\n')
-          git config --global http.https://github.com/.extraheader "AUTHORIZATION: basic ${AUTH_HEADER}"
-          trap 'git config --global --unset-all http.https://github.com/.extraheader || true' EXIT
+          if [ -z "$TOKEN" ]; then
+            echo "SYNC_API_TOKEN is empty or not configured"
+            exit 1
+          fi
 
-          git clone "https://github.com/${REPO}.git" target
+          git clone "https://x-access-token:${TOKEN}@github.com/${REPO}.git" target
           cd target
 
           git config user.email "bot@clovord.com"
@@ -170,11 +171,12 @@ jobs:
           BASE_BRANCH="master"
           REPO="Clovord/Clovord---Website---Main"
 
-          AUTH_HEADER=$(printf "x-access-token:%s" "$TOKEN" | base64 | tr -d '\n')
-          git config --global http.https://github.com/.extraheader "AUTHORIZATION: basic ${AUTH_HEADER}"
-          trap 'git config --global --unset-all http.https://github.com/.extraheader || true' EXIT
+          if [ -z "$TOKEN" ]; then
+            echo "SYNC_WEBAPP_TOKEN is empty or not configured"
+            exit 1
+          fi
 
-          git clone "https://github.com/${REPO}.git" target
+          git clone "https://x-access-token:${TOKEN}@github.com/${REPO}.git" target
           cd target
 
           git config user.email "bot@clovord.com"
@@ -285,11 +287,12 @@ jobs:
           BASE_BRANCH="master"
           REPO="Clovord/Clovord---Website---Downloads"
 
-          AUTH_HEADER=$(printf "x-access-token:%s" "$TOKEN" | base64 | tr -d '\n')
-          git config --global http.https://github.com/.extraheader "AUTHORIZATION: basic ${AUTH_HEADER}"
-          trap 'git config --global --unset-all http.https://github.com/.extraheader || true' EXIT
+          if [ -z "$TOKEN" ]; then
+            echo "SYNC_DOWNLOADS_TOKEN is empty or not configured"
+            exit 1
+          fi
 
-          git clone "https://github.com/${REPO}.git" target
+          git clone "https://x-access-token:${TOKEN}@github.com/${REPO}.git" target
           cd target
 
           git config user.email "bot@clovord.com"
@@ -373,11 +376,12 @@ jobs:
           BASE_BRANCH="master"
           REPO="Clovord/Clovord---Desktop"
 
-          AUTH_HEADER=$(printf "x-access-token:%s" "$TOKEN" | base64 | tr -d '\n')
-          git config --global http.https://github.com/.extraheader "AUTHORIZATION: basic ${AUTH_HEADER}"
-          trap 'git config --global --unset-all http.https://github.com/.extraheader || true' EXIT
+          if [ -z "$TOKEN" ]; then
+            echo "SYNC_DESKTOP_TOKEN is empty or not configured"
+            exit 1
+          fi
 
-          git clone "https://github.com/${REPO}.git" target
+          git clone "https://x-access-token:${TOKEN}@github.com/${REPO}.git" target
           cd target
 
           git config user.email "bot@clovord.com"
@@ -467,11 +471,12 @@ jobs:
           BASE_BRANCH="master"
           REPO="Clovord/Clovord---Mobile"
 
-          AUTH_HEADER=$(printf "x-access-token:%s" "$TOKEN" | base64 | tr -d '\n')
-          git config --global http.https://github.com/.extraheader "AUTHORIZATION: basic ${AUTH_HEADER}"
-          trap 'git config --global --unset-all http.https://github.com/.extraheader || true' EXIT
+          if [ -z "$TOKEN" ]; then
+            echo "SYNC_MOBILE_TOKEN is empty or not configured"
+            exit 1
+          fi
 
-          git clone "https://github.com/${REPO}.git" target
+          git clone "https://x-access-token:${TOKEN}@github.com/${REPO}.git" target
           cd target
 
           git config user.email "bot@clovord.com"
