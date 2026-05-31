@@ -71,7 +71,7 @@ jobs:
           ROOT_DIR="$PWD"
           BRANCH="automation/sync-api-translations"
           BASE_BRANCH="main"
-          REPO="Clovord/Clovord---API"
+          REPO="Clovord/API"
 
           if [ -z "$TOKEN" ]; then
             echo "SYNC_API_TOKEN is empty or not configured"
@@ -149,7 +149,7 @@ jobs:
               --base "${BASE_BRANCH}" \
               --head "${BRANCH}" \
               --title "Sync translations (API)" \
-              --body "Automated translation sync from Clovord---Translations."
+              --body "Automated translation sync from Translations."
 
             PR_NUMBER=$(gh pr list \
               --repo "$REPO" \
@@ -185,7 +185,7 @@ jobs:
           ROOT_DIR="$PWD"
           BRANCH="automation/sync-webapp-translations"
           BASE_BRANCH="master"
-          REPO="Clovord/Clovord---Website---Main"
+          REPO="Clovord/Homepage"
 
           if [ -z "$TOKEN" ]; then
             echo "SYNC_WEBAPP_TOKEN is empty or not configured"
@@ -266,7 +266,7 @@ jobs:
               --base "${BASE_BRANCH}" \
               --head "${BRANCH}" \
               --title "Sync translations (WebApp)" \
-              --body "Automated translation sync from Clovord---Translations."
+              --body "Automated translation sync from Translations."
 
             PR_NUMBER=$(gh pr list \
               --repo "$REPO" \
@@ -300,7 +300,7 @@ jobs:
           ROOT_DIR="$PWD"
           BRANCH="automation/sync-downloads-translations"
           BASE_BRANCH="master"
-          REPO="Clovord/Clovord---Website---Downloads"
+          REPO="Clovord/DownloadPage"
 
           if [ -z "$TOKEN" ]; then
             echo "SYNC_DOWNLOADS_TOKEN is empty or not configured"
@@ -354,7 +354,7 @@ jobs:
               --base "${BASE_BRANCH}" \
               --head "${BRANCH}" \
               --title "Sync translations (Downloads)" \
-              --body "Automated translation sync from Clovord---Translations."
+              --body "Automated translation sync from Translations."
 
             PR_NUMBER=$(gh pr list \
               --repo "$REPO" \
@@ -388,7 +388,7 @@ jobs:
           ROOT_DIR="$PWD"
           BRANCH="automation/sync-desktop-translations"
           BASE_BRANCH="master"
-          REPO="Clovord/Clovord---Desktop"
+          REPO="Clovord/DesktopApp"
 
           if [ -z "$TOKEN" ]; then
             echo "SYNC_DESKTOP_TOKEN is empty or not configured"
@@ -448,7 +448,7 @@ jobs:
               --base "${BASE_BRANCH}" \
               --head "${BRANCH}" \
               --title "Sync translations (Desktop)" \
-              --body "Automated translation sync from Clovord---Translations."
+              --body "Automated translation sync from Translations."
 
             PR_NUMBER=$(gh pr list \
               --repo "$REPO" \
@@ -482,7 +482,7 @@ jobs:
           ROOT_DIR="$PWD"
           BRANCH="automation/sync-mobile-translations"
           BASE_BRANCH="master"
-          REPO="Clovord/Clovord---Mobile"
+          REPO="Clovord/MobileApp"
 
           if [ -z "$TOKEN" ]; then
             echo "SYNC_MOBILE_TOKEN is empty or not configured"
@@ -542,7 +542,7 @@ jobs:
               --base "${BASE_BRANCH}" \
               --head "${BRANCH}" \
               --title "Sync translations (Mobile)" \
-              --body "Automated translation sync from Clovord---Translations."
+              --body "Automated translation sync from Translations."
 
             PR_NUMBER=$(gh pr list \
               --repo "$REPO" \
