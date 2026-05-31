@@ -463,7 +463,7 @@
   "403196": "Channel is already linked to another lobby",
   "403197": "Rules and public updates channels are only available for community guilds",
   "403198": "You cannot remove this app's Entry Point command in a bulk update operation. Please include the Entry Point command in your update request or delete it separately.",
-  "403199": "User does not have the necessary lobby permissions to perform this action",
+  "403199": "UNDEFINED STRING (403199)",
   "403200": "Cannot set reminder in the past",
   "403201": "Due date must be in less than 5 years",
   "403202": "Recipient does not allow messages from game friends in Discord",
