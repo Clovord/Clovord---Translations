@@ -162,7 +162,6 @@ jobs:
 
           MERGE_OUTPUT=$(gh pr merge \
             --repo "$REPO" \
-            --auto \
             --squash \
             --delete-branch \
             "${PR_NUMBER}" 2>&1) || MERGE_STATUS=$?
