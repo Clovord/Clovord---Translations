@@ -1837,5 +1837,6 @@
     "CdSGVuaGcn": "Login with Discord",
     "A8kTz4LmQp2V": "Connections login successful, starting app.",
     "N3wRp7XfLq5M": "Login successful, but MFA required.",
-    "k8rU5FRPGc": "Connectiom issues? Checkout our status page"
+    "k8rU5FRPGc": "Connectiom issues? Checkout our status page",
+    "test": "This is a test string - v1"
 }
