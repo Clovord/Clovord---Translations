@@ -43,7 +43,7 @@ jobs:
 
   trigger-translation-webhook:
     needs: detect
-    if: needs.detect.outputs.api == 'true' || needs.detect.outputs.webapp == 'true'
+    if: needs.detect.outputs.api == 'true' || needs.detect.outputs.webapp == 'true' || needs.detect.outputs.desktop == 'true' || needs.detect.outputs.mobile == 'true' || needs.detect.outputs.downloads == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

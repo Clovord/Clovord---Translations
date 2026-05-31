@@ -139,13 +139,15 @@ def main() -> int:
 
     file_changes = {"api": [], "frontend": []}
     for path in changed_files:
-        if path.startswith("API/") and path.endswith(".json"):
+        if not path.endswith(".json"):
+            continue
+        if path.startswith("API/"):
             file_changes["api"].append(path)
-        elif path.startswith("WebApp/") and path.endswith(".json"):
+        elif path.startswith("WebApp/") or path.startswith("DesktopApp/") or path.startswith("MobileApp/") or path.startswith("DownloadPage/"):
             file_changes["frontend"].append(path)
 
     if not file_changes["api"] and not file_changes["frontend"]:
-        print("No API or WebApp translation JSON changes to send.")
+        print("No translation JSON changes to send.")
         return 0
 
     overall_exit = 0
