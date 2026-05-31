@@ -109,7 +109,7 @@ jobs:
           rebase_push_success=0
           for attempt in 1 2 3; do
             git fetch origin "${BASE_BRANCH}"
-            if ! git rebase "origin/${BASE_BRANCH}"; then
+            if ! git rebase -X ours "origin/${BASE_BRANCH}"; then
               git rebase --abort || true
               if [ "$attempt" -lt 3 ]; then
                 sleep $((attempt * 2))
@@ -248,7 +248,7 @@ jobs:
           git push origin "${BRANCH}" --force-with-lease
 
           git fetch origin "${BASE_BRANCH}"
-          git rebase "origin/${BASE_BRANCH}"
+          git rebase -X ours "origin/${BASE_BRANCH}"
           git push origin "${BRANCH}" --force-with-lease
 
           export GH_TOKEN="$TOKEN"
@@ -336,7 +336,7 @@ jobs:
           git push origin "${BRANCH}" --force-with-lease
 
           git fetch origin "${BASE_BRANCH}"
-          git rebase "origin/${BASE_BRANCH}"
+          git rebase -X ours "origin/${BASE_BRANCH}"
           git push origin "${BRANCH}" --force-with-lease
 
           export GH_TOKEN="$TOKEN"
@@ -430,7 +430,7 @@ jobs:
           git push origin "${BRANCH}" --force-with-lease
 
           git fetch origin "${BASE_BRANCH}"
-          git rebase "origin/${BASE_BRANCH}"
+          git rebase -X ours "origin/${BASE_BRANCH}"
           git push origin "${BRANCH}" --force-with-lease
 
           export GH_TOKEN="$TOKEN"
@@ -524,7 +524,7 @@ jobs:
           git push origin "${BRANCH}" --force-with-lease
 
           git fetch origin "${BASE_BRANCH}"
-          git rebase "origin/${BASE_BRANCH}"
+          git rebase -X ours "origin/${BASE_BRANCH}"
           git push origin "${BRANCH}" --force-with-lease
 
           export GH_TOKEN="$TOKEN"
