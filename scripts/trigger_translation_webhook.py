@@ -112,6 +112,7 @@ def send_webhook(file_type: str, changes: List[Dict[str, Any]]) -> None:
         "file_type": file_type,
         "changes": changes,
         "send_webhook": True,
+        "notify_translators": True,
     }
     body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
     req = urllib.request.Request(
