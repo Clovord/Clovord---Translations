@@ -41,6 +41,23 @@ jobs:
               - "MobileApp/**"
               - "WebApp/**"
 
+  trigger-translation-webhook:
+    needs: detect
+    if: needs.detect.outputs.api == 'true' || needs.detect.outputs.webapp == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Trigger translation webhook
+        env:
+          API_BASE_URL: ${{ secrets.ORG_API_BASE_URL }}
+          BUILD_WEBHOOK_TOKEN: ${{ secrets.CLOVORD_BUILD_WEBHOOK_SECRET || secrets.ORG_API_BUILD_WEBHOOK_SECRET }}
+          BEFORE_SHA: ${{ github.event.before }}
+          HEAD_SHA: ${{ github.sha }}
+        run: |
+          python scripts/trigger_translation_webhook.py
+
   sync-api:
     needs: detect
     if: needs.detect.outputs.api == 'true'
