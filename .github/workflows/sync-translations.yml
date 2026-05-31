@@ -279,7 +279,6 @@ jobs:
 
           MERGE_OUTPUT=$(gh pr merge \
             --repo "$REPO" \
-            --auto \
             --squash \
             "${PR_NUMBER}" 2>&1) || MERGE_STATUS=$?
 
@@ -368,7 +367,6 @@ jobs:
 
           MERGE_OUTPUT=$(gh pr merge \
             --repo "$REPO" \
-            --auto \
             --squash \
             "${PR_NUMBER}" 2>&1) || MERGE_STATUS=$?
 
@@ -463,7 +461,6 @@ jobs:
 
           MERGE_OUTPUT=$(gh pr merge \
             --repo "$REPO" \
-            --auto \
             --squash \
             "${PR_NUMBER}" 2>&1) || MERGE_STATUS=$?
 
@@ -558,7 +555,6 @@ jobs:
 
           MERGE_OUTPUT=$(gh pr merge \
             --repo "$REPO" \
-            --auto \
             --squash \
             "${PR_NUMBER}" 2>&1) || MERGE_STATUS=$?
 
