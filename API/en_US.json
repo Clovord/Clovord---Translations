@@ -459,7 +459,7 @@
   "403192": "Invalid user type",
   "403193": "Activities cannot be launched on user's current client platform",
   "403194": "Activity failed to launch due to internal error",
-  "403195": "Invalid channel for lobby channel linking",
+  "403195": "UNDEFINED STRING (403195)",
   "403196": "Channel is already linked to another lobby",
   "403197": "Rules and public updates channels are only available for community guilds",
   "403198": "You cannot remove this app's Entry Point command in a bulk update operation. Please include the Entry Point command in your update request or delete it separately.",
